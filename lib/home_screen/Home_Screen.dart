@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../image_upload_module/image_upload_module.dart';
 import '../modal/scanned_item_modal.dart';
 import '../scanner_module/scanner_module.dart';
 import '../sqlite_manager/database_helper.dart';
@@ -17,7 +18,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final List<ScannedItemModal> scannedList = [];
   final List<ScannedItemModal> addNewScannedData = [];
-  final DatabaseHelper dbHelper = DatabaseHelper();
+  final DatabaseHelper _databaseHelper = DatabaseHelper();
 
   @override
   void initState() {
@@ -29,10 +30,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadScannedData() async {
-    final List<Map<String, dynamic>> rawData = await dbHelper.readData('SerialNumberStoreTable');
+    final List<Map<String, dynamic>> rawData = await _databaseHelper.readData('SerialNumberStoreTable');
 
     final List<ScannedItemModal> allData =
-    rawData.map((row) => ScannedItemModal.fromMap(row)).toList();
+    rawData.map((row) => ScannedItemModal.fromJson(row)).toList();
 
     setState(() {
       scannedList.clear();
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
   Future<void> _deleteScanned(int id) async {
-    await dbHelper.deleteData('SerialNumberStoreTable', id);
+    await _databaseHelper.deleteData('SerialNumberStoreTable', id);
     _loadScannedData();
   }
 
@@ -77,14 +78,55 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   SizedBox(width: 20,),
                   GestureDetector(
-                    onTap: () {
+                    onTap: () async {
+                      try {
+                        final ListOfScannedDataAndResponseMessage scanResponse =
+                        await uploadImageAndScan();
+
+                        if (scanResponse.listOfScannedData != null && scanResponse.listOfScannedData!.isNotEmpty)
+                        {
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(scanResponse.responseMessage), backgroundColor: Colors.green, duration: const Duration(seconds: 5)),
+                          );
+
+                          // Convert ScannedItemModal → Map<String, dynamic>
+                          final List<Map<String, dynamic>> codeMaps = scanResponse.listOfScannedData!.map((code) => code.mapToJson()).toList();
+                          // Database insert response
+                          final dbResponse = await _databaseHelper.insertDataList("SerialNumberStoreTable", codeMaps);
+                          _loadScannedData();
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(dbResponse), backgroundColor: Colors.green, duration: const Duration(seconds: 5)),
+                          );
+
+                          print("Insert response: $dbResponse");
+
+                        }
+                        else
+                          {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(scanResponse.responseMessage), backgroundColor: Colors.red, duration: const Duration(seconds: 5),),
+                            );
+                          }
+                      } catch (e) {
+                        print("Error: $e");
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Error: ${e}"), backgroundColor: Colors.red, duration: const Duration(seconds: 5)),
+                        );
+                      }
                     },
-                    child: Column(children: [
-                      Icon(Icons.image_outlined, size: 50),
-                      SizedBox(height: 8),
-                      Text("Upload Image", style: TextStyle(fontSize: 18)),
-                    ],),
+                    child: Column(
+                      children: [
+                        Icon(Icons.image_outlined, size: 50),
+                        SizedBox(height: 8),
+                        Text("Upload Image", style: TextStyle(fontSize: 18)),
+                      ],
+                    ),
                   )
+
+
+
                 ],
               ),
             ),

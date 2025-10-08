@@ -54,7 +54,7 @@ class _ScannerModuleState extends State<ScannerModule> {
       return;
     }
 
-    final dataList = scannedItems.map((item) => item.toMap()).toList();
+    final dataList = scannedItems.map((item) => item.mapToJson()).toList();
     final response = await _databaseHelper.insertDataList(
         "SerialNumberStoreTable", dataList);
 
@@ -68,9 +68,17 @@ class _ScannerModuleState extends State<ScannerModule> {
 
   void _deleteItem(int index) {
     setState(() {
+      // Get the item before removing
+      final item = scannedItems[index];
+
+      // Remove from list
       scannedItems.removeAt(index);
+
+      // Remove its serial number from the set
+      _scannedCodes.remove(item.serialNumber);
     });
   }
+
 
   void _toggleTorch() {
     controller.toggleTorch();
