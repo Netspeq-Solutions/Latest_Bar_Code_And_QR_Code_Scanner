@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:latestversionscanner/home_screen/custom_button.dart';
 
 import '../image_upload_module/image_upload_module.dart';
 import '../modal/scanned_item_modal.dart';
+import '../network_services/network_google_sheets_api_call.dart';
 import '../scanner_module/scanner_module.dart';
 import '../sqlite_manager/database_helper.dart';
 import 'package:flutter/services.dart';
@@ -182,6 +184,21 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
         ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(left: 8, right: 8),
+        child: SizedBox(
+          width: double.infinity,
+          child: ScanButtonWidget(text: "Store Data", onPressed: () async{
+           var response = await GoogleSheetsService().callApi('store', {
+              'serialNo': '123',
+              'scannedTyped': 'TypeA',
+              'timestamp': DateTime.now().toIso8601String(),
+            });
+           // print("Google Sheets API Response: $response");
+          }),
+        ),
       ),
     );
   }
