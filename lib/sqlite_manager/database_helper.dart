@@ -109,4 +109,14 @@ class DatabaseHelper {
       return "Error: Delete failed due to $e";
     }
   }
+
+  Future<String> clearTable(String tableName) async {
+    try {
+      final db = await database;
+      final rows = await db.delete(tableName);
+      return "Success: Cleared $rows row(s) from $tableName";
+    } catch (e) {
+      return "Error: Failed to clear table $e";
+    }
+  }
 }

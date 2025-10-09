@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:latestversionscanner/Device_Info_Module/device_info_app.dart';
 import 'package:latestversionscanner/home_screen/custom_button.dart';
 
 import '../image_upload_module/image_upload_module.dart';
@@ -190,14 +191,94 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: EdgeInsets.only(left: 8, right: 8),
         child: SizedBox(
           width: double.infinity,
-          child: ScanButtonWidget(text: "Store Data", onPressed: () async{
-           var response = await GoogleSheetsService().callApi('store', {
-              'serialNo': '123',
-              'scannedTyped': 'TypeA',
-              'timestamp': DateTime.now().toIso8601String(),
-            });
-           // print("Google Sheets API Response: $response");
-          }),
+          child: ScanButtonWidget(
+            text: "Store Data",
+            onPressed: () async {
+              try {
+                final List<Map<String, dynamic>> rawData =
+                await _databaseHelper.readData('SerialNumberStoreTable');
+
+                String deviceID = await getDeviceId();
+                print("Device ID: $deviceID");
+
+                if (rawData.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("No data to store!"),
+                      backgroundColor: Colors.red,
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                  return;
+                }
+
+                print("📦 Raw data from database (${rawData.length} items): $rawData");
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Storing ${rawData.length} records..."),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+
+                // Convert to ScannedItemModal
+                final List<ScannedItemModal> allData =
+                rawData.map((row) => ScannedItemModal.fromJson(row)).toList();
+
+                print("✅ Converted to models: ${allData.length} items");
+
+                // Prepare data for Google Sheets
+                List<Map<String, dynamic>> dataToSend = allData.map((item) {
+                  return {
+                    "id": item.id ?? "",
+                    "deviceID": deviceID, // Static or dynamic device ID
+                    "serialNumber": item.serialNumber,
+                    "scanned_type": item.format,
+                    "timestamp": item.scannedAt,
+                  };
+                }).toList();
+
+                print("📤 Data to send to Google Sheets:");
+                // print(jsonEncode(dataToSend)); // Print as formatted JSON
+
+                // Call API
+                var response = await GoogleSheetsService().callApi('store', {
+                  'data': dataToSend
+                });
+
+                print("📥 Google Sheets Response: $response");
+
+                if (!context.mounted) return;
+                else
+                {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("✓ ${response['message'] ?? 'Data stored successfully'}"),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+
+                  // Clear local database after successful upload
+                  await _databaseHelper.clearTable('SerialNumberStoreTable');
+                  _loadScannedData();
+                }
+
+              } catch (e, stackTrace) {
+                print("❌ Error storing data: $e");
+                print("Stack trace: $stackTrace");
+
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("✗ Error: ${e.toString()}"),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 5),
+                  ),
+                );
+              }
+            },
+          ),
         ),
       ),
     );

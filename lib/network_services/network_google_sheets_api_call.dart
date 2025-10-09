@@ -2,163 +2,131 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GoogleSheetsService {
-  final String webAppUrl = "YOUR_EXEC_URL_HERE";
+  final String webAppUrl = "https://script.google.com/macros/s/AKfycbwJ0i6xt5kF2pVkKoCNRfK9K790UWCdvbUDXAC23dsT5Y8dLpkW83XIr5ivLOAoOYc6/exec";
 
   Future<Map<String, dynamic>> callApi(
       String action, Map<String, dynamic> data) async {
     data['action'] = action;
 
-    final response = await http.post(
+    var response = await http.post(
+      Uri.parse(webAppUrl),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(data),
+    );
+
+    print("Status Code: ${response.statusCode}");
+    print("Response Body: ${response.body}");
+
+    // Handle 302 redirect manually
+    if (response.statusCode == 302 || response.statusCode == 301) {
+      final redirectUrl = _extractRedirectUrl(response.body);
+
+      if (redirectUrl != null) {
+        print("Following redirect to: $redirectUrl");
+        response = await http.get(Uri.parse(redirectUrl));
+        print("Redirect Status Code: ${response.statusCode}");
+        print("Redirect Response Body: ${response.body}");
+      }
+    }
+
+    // Process the final response
+    if (response.statusCode >= 200 && response.statusCode < 400) {
+      try {
+        if (response.body.isNotEmpty && !response.body.startsWith('<')) {
+          // Parse JSON string to Map
+          return jsonDecode(response.body) as Map<String, dynamic>;
+        }
+      } catch (e) {
+        print("Could not parse JSON: $e");
+      }
+
+      // Return generic success if parsing fails
+      return {
+        "status": "success",
+        "message": "Data stored successfully",
+        "statusCode": response.statusCode
+      };
+    } else {
+      throw Exception("Failed: ${response.statusCode}\nBody: ${response.body}");
+    }
+  }
+
+  String? _extractRedirectUrl(String html) {
+    final match = RegExp(r'HREF="([^"]+)"').firstMatch(html);
+    return match?.group(1)?.replaceAll('&amp;', '&');
+  }
+}
+
+/*
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+class GoogleSheetsService {
+  final String webAppUrl = "https://script.google.com/macros/s/AKfycbyB4gdgK2AVSJwcwflULKF9zVj2Li5QSkMH1FLMtxc6XHyPcAs03bU2aKsH6RB0JANG/exec";
+
+  Future<Map<String, dynamic>> callApi(
+      String action, Map<String, dynamic> data) async {
+    data['action'] = action;
+
+    var response = await http.post(
       Uri.parse(webAppUrl),
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", // <- Add this
       },
       body: jsonEncode(data),
     );
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else if (response.statusCode == 302) {
-      throw Exception(
-          "Server returned 302 redirect. Make sure you are using the /exec URL.");
-    } else {
-      throw Exception(
-          "Failed: ${response.statusCode} ${response.body.substring(0, 200)}");
-    }
-  }
-}
+    print("Status Code: ${response.statusCode}");
+    print("Response Body: ${response.body}");
 
+    // Handle 302 redirect manually
+    if (response.statusCode == 302 || response.statusCode == 301) {
+      // Extract redirect URL from HTML response
+      final redirectUrl = _extractRedirectUrl(response.body);
 
-/*// network_services/network_google_sheets_api.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+      if (redirectUrl != null) {
+        print("Following redirect to: $redirectUrl");
 
-class GoogleSheetsService {
-  final String webAppUrl =
-      "https://script.google.com/macros/s/AKfycbyB4gdgK2AVSJwcwflULKF9zVj2Li5QSkMH1FLMtxc6XHyPcAs03bU2aKsH6RB0JANG/exec"; // Apps Script /exec URL
+        // Make GET request to the redirect URL
+        response = await http.get(Uri.parse(redirectUrl));
 
-  // Singleton
-  GoogleSheetsService._privateConstructor();
-  static final GoogleSheetsService instance =
-  GoogleSheetsService._privateConstructor();
-
-  Future<Map<String, dynamic>> callApi(
-      String action, Map<String, dynamic> data) async {
-    data['action'] = action;
-
-    final response = await http.post(
-      Uri.parse(webAppUrl),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(data),
-    );
-
-    // Check for successful response
-    if (response.statusCode == 200) {
-      // Ensure the response is JSON
-      if (response.headers['content-type'] != null &&
-          response.headers['content-type']!.contains('application/json')) {
-        print("Data Successfully Inserted");
-        return jsonDecode(response.body);
-      } else {
-        throw Exception(
-            "Expected JSON but got HTML or other content: ${jsonDecode(response.body)}");
+        print("Redirect Status Code: ${response.statusCode}");
+        print("Redirect Response Body: ${response.body}");
       }
-    } else if (response.statusCode == 302) {
-      throw Exception(
-          "Server returned 302 redirect. Check your Web App URL or deployment permissions.${response.body}");
-    } else {
-      throw Exception(
-          "Failed: ${response.statusCode} ${response.body.substring(0, 200)}...");
     }
-  }
-}*/
 
-
-
-
-
-
-
-
-/*// network_services/network_google_sheets_api.dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-
-class GoogleSheetsService {
-  final String webAppUrl = "https://script.google.com/macros/s/AKfycbyAh_VPvyifPKwKCRwsrXVbjRp5zcI201-wtzMTlD8ej93gdI8IVq0fD39apGNixWcB/exec"; // Apps Script /exec URL
-
-  // Singleton
-  GoogleSheetsService._privateConstructor();
-  static final GoogleSheetsService instance = GoogleSheetsService._privateConstructor();
-
-  Future<Map<String, dynamic>> callApi(String action, Map<String, dynamic> data) async {
-    data['action'] = action;
-    final response = await http.post(
-      Uri.parse(webAppUrl),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(data),
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception("Failed: ${response.statusCode} ${response.body}");
-    }
-  }
-}*/
-
-
-
-/*import 'dart:convert';
-import 'package:http/http.dart' as http;
-
-Future<void> callGoogleSheetAPI(String action, Map<String, dynamic> data) async {
-  final url = Uri.parse("https://script.google.com/macros/s/AKfycbyAh_VPvyifPKwKCRwsrXVbjRp5zcI201-wtzMTlD8ej93gdI8IVq0fD39apGNixWcB/exec"); // Your exec URL
-  data['action'] = action;
-
-  final response = await http.post(
-    url,
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode(data),
-  );
-
-  print("Status code: ${response.statusCode}");
-  print("Response body: ${response.body}");
-
-  if(response.statusCode == 200 || response.statusCode == 302) {
-    final result = jsonDecode(response.body);
-    print("Result: $result");
-  } else {
-    print("Error: Server returned ${response.statusCode}");
-  }
-}*/
-
-
-/*import 'dart:convert';
-import 'package:http/http.dart' as http;
-
-Future<String> callGoogleSheetAPI(String action, Map<String, dynamic> data) async {
-  try
-      {
-        final url = Uri.parse("https://script.google.com/macros/s/AKfycbxaIh_Zlzh2R47ju7P73gjppjW6RiafLbK7LKJyYQ3fB3Orpv_E7lH1BvQv-R-XDgg/exec");
-        data['action'] = action;
-
-        final response = await http.post(
-          url,
-          headers: {"Content-Type": "application/json"},
-          body: jsonEncode(data),
-        );
-
-        if (response.statusCode != 200) {
-          print(response.body);
-          return "Error: ${response.statusCode} - ${response.reasonPhrase}";
+    // Process the final response
+    if (response.statusCode >= 200 && response.statusCode < 400) {
+      try {
+        if (response.body.isNotEmpty && !response.body.startsWith('<')) {
+          return jsonDecode(response.body);
         }
-        print(response.body);
-        return jsonDecode(response.body);
+      } catch (e) {
+        print("Could not parse JSON: $e");
       }
-  catch(e)
-     {
-          return "Error: $e";
-     }
+
+      // Return generic success if parsing fails
+      return {
+        "status": "success",
+        "message": "Data stored successfully",
+        "statusCode": response.statusCode
+      };
+    } else {
+      throw Exception(
+          "Failed: ${response.statusCode}\nBody: ${response.body}");
+    }
+  }
+
+  // Extract redirect URL from HTML response
+  String? _extractRedirectUrl(String html) {
+    final hrefRegex = RegExp(r'HREF="([^"]+)"');
+    final match = hrefRegex.firstMatch(html);
+    if (match != null && match.groupCount >= 1) {
+      var url = match.group(1)!;
+      // Decode HTML entities
+      url = url.replaceAll('&amp;', '&');
+      return url;
+    }
+    return null;
+  }
 }*/
