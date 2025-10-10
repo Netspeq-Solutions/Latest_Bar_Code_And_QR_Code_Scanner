@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GoogleSheetsService {
-  final String webAppUrl = "https://script.google.com/macros/s/AKfycbwJ0i6xt5kF2pVkKoCNRfK9K790UWCdvbUDXAC23dsT5Y8dLpkW83XIr5ivLOAoOYc6/exec";
+  final String webAppUrl = "https://script.google.com/macros/s/AKfycbzBxNYAduLfFyFDjwsH7Ga4P9ROKOaYb1pJbxWxjtKyADdJDdrDq4hY4i2ki71cCwpc/exec";
 
   Future<Map<String, dynamic>> callApi(
       String action, Map<String, dynamic> data) async {

@@ -90,20 +90,20 @@ class DatabaseHelper {
     }
   }
 
-  Future<String> deleteData(String tableName, int deleteID) async {
+  Future<String> deleteData(String tableName, String serialNumber) async {
     try {
       final db = await database;
 
       final rows = await db.delete(
         tableName,
-        where: "id = ?",
-        whereArgs: [deleteID],
+        where: "serialNumber = ?",
+        whereArgs: [serialNumber],
       );
 
       if (rows > 0) {
-        return "Success: Deleted $rows row(s) with ID $deleteID";
+        return "Success: Deleted $rows row(s) with ID $serialNumber";
       } else {
-        return "Error: No record found with ID $deleteID";
+        return "Error: No record found with ID $serialNumber";
       }
     } catch (e) {
       return "Error: Delete failed due to $e";
