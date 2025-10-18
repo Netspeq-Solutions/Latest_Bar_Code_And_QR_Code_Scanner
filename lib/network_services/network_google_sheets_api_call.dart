@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:latestversionscanner/modal/vendor_and_project_model.dart';
 
 class GoogleSheetsService {
-  final String webAppUrl = "https://script.google.com/macros/s/AKfycbzBxNYAduLfFyFDjwsH7Ga4P9ROKOaYb1pJbxWxjtKyADdJDdrDq4hY4i2ki71cCwpc/exec";
+  final String webAppUrl = "https://script.google.com/macros/s/AKfycby7lD-Ik6ovsPzsZo-buIQvQdUuYx5UkGa9vKl0VjS5g1V0VVwWEOmCUNeWf-EdgJWO/exec";
+  final String webAppUrlToGetVendorAndProjectList = "https://script.google.com/macros/s/AKfycbyzqxvV4wHilK_ezDur6X0S6nUXEKCC2ymm1acXnHycOm8PJFHEkOAxE0p5TjM1popt/exec";
 
   Future<Map<String, dynamic>> callApi(
       String action, Map<String, dynamic> data) async {
@@ -54,6 +56,21 @@ class GoogleSheetsService {
   String? _extractRedirectUrl(String html) {
     final match = RegExp(r'HREF="([^"]+)"').firstMatch(html);
     return match?.group(1)?.replaceAll('&amp;', '&');
+  }
+  Future<List<VendorAndProjectModel>> fetchVendorAndProjectList() async {
+    try {
+      var response = await http.get(Uri.parse(webAppUrlToGetVendorAndProjectList));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body); // directly parse JSON
+        return data.map((item) => VendorAndProjectModel.fromJson(item)).toList();
+      } else {
+        throw Exception('Failed to load vendor and project list. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print("Error fetching vendor and project list: $e");
+      return [];
+    }
   }
 }
 
