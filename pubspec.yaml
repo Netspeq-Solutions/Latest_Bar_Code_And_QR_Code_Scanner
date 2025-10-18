@@ -39,6 +39,8 @@ dependencies:
   dio: ^5.9.0
   http: ^1.5.0
   device_info_plus: ^11.5.0
+  riverpod: ^3.0.3
+  flutter_riverpod: ^3.0.3
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -60,11 +62,17 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  assets:
+    - assets/json_data/vendors_name.json
+    - assets/json_data/projects_name.json
+    # Or include the whole folder:
+    # - assets/json_data/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:

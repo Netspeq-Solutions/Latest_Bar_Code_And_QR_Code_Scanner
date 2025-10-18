@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'home_screen/Home_Screen.dart';
 import 'network_services/network_google_sheets_api_call.dart';
 
@@ -13,7 +14,7 @@ Future<void> main() async {
   //   print("Error fetching initial data: $e");
   // }
 
-  runApp(const ProfessionalBarcodeScannerApp());
+  runApp(ProviderScope(child: const ProfessionalBarcodeScannerApp()));
 }
 
 class ProfessionalBarcodeScannerApp extends StatelessWidget {
