@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'home_screen/Home_Screen.dart';
 import 'network_services/network_google_sheets_api_call.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Required for async in main
+  WidgetsFlutterBinding.ensureInitialized();
 
-  // // Example: Fetch initial data
+  // Example: Optional initialization
   // try {
   //   final data = await GoogleSheetsService.instance.callApi('get', {});
   //   print("Initial Google Sheets data: $data");
@@ -13,41 +14,14 @@ Future<void> main() async {
   //   print("Error fetching initial data: $e");
   // }
 
-  runApp(const ProfessionalBarcodeScannerApp());
+  // ✅ Wrap app with ProviderScope for Riverpod
+  runApp(const ProviderScope(child: ProfessionalBarcodeScannerApp()));
 }
 
 class ProfessionalBarcodeScannerApp extends StatelessWidget {
   const ProfessionalBarcodeScannerApp({super.key});
 
-  @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
-    );
+    return MaterialApp(debugShowCheckedModeBanner: false, home: HomeScreen());
   }
 }
-
-
-
-/*
-import 'package:flutter/material.dart';
-import 'home_screen/Home_Screen.dart';
-
-
-void main() {
-  runApp(const ProfessionalBarcodeScannerApp());
-}
-class ProfessionalBarcodeScannerApp extends StatelessWidget {
-  const ProfessionalBarcodeScannerApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomeScreen(),
-    );
-  }
-}
-
-*/
