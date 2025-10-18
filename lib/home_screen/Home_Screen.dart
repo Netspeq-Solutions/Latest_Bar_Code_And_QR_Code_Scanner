@@ -13,7 +13,6 @@ import '../scanner_module/scanner_module.dart';
 import '../sqlite_manager/database_helper.dart';
 import 'custom_button.dart';
 
-
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -33,11 +32,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _loadScannedData() async {
-    final List<Map<String, dynamic>> rawData =
-    await _databaseHelper.readData('SerialNumberStoreTable');
+    final List<Map<String, dynamic>> rawData = await _databaseHelper.readData(
+      'SerialNumberStoreTable',
+    );
 
-    final List<ScannedItemModal> allData =
-    rawData.map((row) => ScannedItemModal.fromJson(row)).toList();
+    final List<ScannedItemModal> allData = rawData
+        .map((row) => ScannedItemModal.fromJson(row))
+        .toList();
 
     setState(() {
       scannedList.clear();
@@ -86,8 +87,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         children: const [
                           Icon(Icons.qr_code, size: 40),
                           SizedBox(height: 8),
-                          Text("Scan QR or Bar",
-                              style: TextStyle(fontSize: 18)),
+                          Text(
+                            "Scan QR or Bar",
+                            style: TextStyle(fontSize: 18),
+                          ),
                         ],
                       ),
                     ),
@@ -102,26 +105,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               scanResponse.listOfScannedData!.isNotEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                  content: Text(scanResponse.responseMessage),
-                                  backgroundColor: Colors.green,
-                                  duration: const Duration(seconds: 5)),
+                                content: Text(scanResponse.responseMessage),
+                                backgroundColor: Colors.green,
+                                duration: const Duration(seconds: 5),
+                              ),
                             );
 
                             final List<Map<String, dynamic>> codeMaps =
-                            scanResponse.listOfScannedData!
-                                .map((code) => code.mapToJson())
-                                .toList();
+                                scanResponse.listOfScannedData!
+                                    .map((code) => code.mapToJson())
+                                    .toList();
 
                             final dbResponse = await _databaseHelper
                                 .insertDataList(
-                                "SerialNumberStoreTable", codeMaps);
+                                  "SerialNumberStoreTable",
+                                  codeMaps,
+                                );
                             _loadScannedData();
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                  content: Text(dbResponse),
-                                  backgroundColor: Colors.green,
-                                  duration: const Duration(seconds: 5)),
+                                content: Text(dbResponse),
+                                backgroundColor: Colors.green,
+                                duration: const Duration(seconds: 5),
+                              ),
                             );
 
                             print("Insert response: $dbResponse");
@@ -138,9 +145,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           print("Error: $e");
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                                content: Text("Error: $e"),
-                                backgroundColor: Colors.red,
-                                duration: const Duration(seconds: 5)),
+                              content: Text("Error: $e"),
+                              backgroundColor: Colors.red,
+                              duration: const Duration(seconds: 5),
+                            ),
                           );
                         }
                       },
@@ -151,7 +159,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           Text("Upload Image", style: TextStyle(fontSize: 18)),
                         ],
                       ),
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -186,8 +194,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   );
                 },
-                loading: () =>
-                const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) => Text(
                   'Error loading vendors: $err',
                   style: const TextStyle(color: Colors.red),
@@ -207,19 +214,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       hint: 'Choose a project',
                       prefixIcon: Icons.folder,
                       onChanged: (value) {
-                        ref.read(selectedProjectProvider.notifier).state = value;
+                        ref.read(selectedProjectProvider.notifier).state =
+                            value;
                       },
                     ),
                   );
                 },
-                loading: () =>
-                const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) => Text(
                   'Error loading projects: $err',
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
-
 
               const SizedBox(height: 20),
 
@@ -233,7 +239,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     onPressed: () => _handleStoreData(context),
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -244,6 +250,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // ✅ Extracted store data logic
   Future<void> _handleStoreData(BuildContext context) async {
     try {
+      String description = "";
+      final storeScannedDataProvider = ref.read(repositoryProvider);
       final selectedVendor = ref.read(selectedVendorProvider);
       final selectedProject = ref.read(selectedProjectProvider);
 
@@ -267,16 +275,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
 
       if (!(_formKey.currentState?.validate() ?? false)) {
-        _showSnackBar(
-          context,
-          "Please fix the errors in the form",
-          Colors.red,
-        );
+        _showSnackBar(context, "Please fix the errors in the form", Colors.red);
         return;
       }
 
-      final List<Map<String, dynamic>> rawData =
-      await _databaseHelper.readData('SerialNumberStoreTable');
+      final List<Map<String, dynamic>> rawData = await _databaseHelper.readData(
+        'SerialNumberStoreTable',
+      );
 
       String deviceID = await getDeviceId();
       print("Device ID: $deviceID");
@@ -295,8 +300,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         duration: 2,
       );
 
-      final List<ScannedItemModal> allData =
-      rawData.map((row) => ScannedItemModal.fromJson(row)).toList();
+      final List<ScannedItemModal> allData = rawData
+          .map((row) => ScannedItemModal.fromJson(row))
+          .toList();
 
       print("✅ Converted to models: ${allData.length} items");
 
@@ -305,12 +311,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           .findAncestorStateOfType<_ScannedItemsListState>();
 
       List<Map<String, dynamic>> dataToSend = [];
+
       for (int i = 0; i < allData.length; i++) {
-        String description = "";
         if (scannedItemsListState != null &&
             i < scannedItemsListState._descriptionControllers.length) {
-          description =
-              scannedItemsListState._descriptionControllers[i].text.trim();
+          description = scannedItemsListState._descriptionControllers[i].text
+              .trim();
         }
 
         dataToSend.add({
@@ -329,7 +335,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
       print("📤 Data to send to Google Sheets:");
 
-      var response = await GoogleSheetsService().callApi('store', {'data': dataToSend});
+      var response = await storeScannedDataProvider.callApi('store', {
+        'data': dataToSend,
+      });
 
       print("📥 Google Sheets Response: $response");
 
@@ -352,12 +360,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       print("Stack trace: $stackTrace");
 
       if (!context.mounted) return;
-      _showSnackBar(context, "✗ Error: ${e.toString()}", Colors.red,
-          duration: 5);
+      _showSnackBar(
+        context,
+        "✗ Error: ${e.toString()}",
+        Colors.red,
+        duration: 5,
+      );
     }
   }
 
-/*
+  /*
   // ✅ Extracted store data logic
   Future<void> _handleStoreData(BuildContext context) async {
     try {
@@ -474,8 +486,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 */
 
-  void _showSnackBar(BuildContext context, String message, Color? color,
-      {int duration = 3}) {
+  void _showSnackBar(
+    BuildContext context,
+    String message,
+    Color? color, {
+    int duration = 3,
+  }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -579,7 +595,7 @@ class _ScannedItemsListState extends State<ScannedItemsList> {
           _serialControllers[index],
           _descriptionControllers[index],
           index,
-              () async {
+          () async {
             if (isScannedData) {
               await _handleDelete(index);
             }
@@ -592,11 +608,11 @@ class _ScannedItemsListState extends State<ScannedItemsList> {
 
 // Helper function
 Widget GenerateComponentSerialDescriptionPhoto(
-    TextEditingController _controllerSerialNumber,
-    TextEditingController _controllerDescription,
-    int index,
-    void Function()? onDelete,
-    ) {
+  TextEditingController _controllerSerialNumber,
+  TextEditingController _controllerDescription,
+  int index,
+  void Function()? onDelete,
+) {
   return ComponentSerialnumberDiscriptionPhoto(
     showDelete: index != -1,
     onDelete: onDelete,
@@ -605,8 +621,7 @@ Widget GenerateComponentSerialDescriptionPhoto(
     serialValidator: (index) => _controllerSerialNumber.text.trim().isEmpty
         ? 'Serial number cannot be empty'
         : null,
-    descriptionValidator: (index) =>
-    _controllerDescription.text.trim().isEmpty
+    descriptionValidator: (index) => _controllerDescription.text.trim().isEmpty
         ? 'Description cannot be empty'
         : null,
   );
