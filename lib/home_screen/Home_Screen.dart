@@ -244,6 +244,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // ✅ Extracted store data logic
   Future<void> _handleStoreData(BuildContext context) async {
     try {
+      final googleSheetsService = ref.read(repositoryProvider);
+
+
       final selectedVendor = ref.read(selectedVendorProvider);
       final selectedProject = ref.read(selectedProjectProvider);
 
@@ -329,7 +332,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
       print("📤 Data to send to Google Sheets:");
 
-      var response = await GoogleSheetsService().callApi('store', {'data': dataToSend});
+      var response = await googleSheetsService.callApi('store', {'data': dataToSend});
+
+      // var response = await GoogleSheetsService().callApi('store', {'data': dataToSend});
 
       print("📥 Google Sheets Response: $response");
 
@@ -356,123 +361,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           duration: 5);
     }
   }
-
-/*
-  // ✅ Extracted store data logic
-  Future<void> _handleStoreData(BuildContext context) async {
-    try {
-      final selectedVendor = ref.read(selectedVendorProvider);
-      final selectedProject = ref.read(selectedProjectProvider);
-
-      // Validate selections
-      if (selectedVendor == null) {
-        _showSnackBar(
-          context,
-          "⚠️ Please select a Vendor before storing data!",
-          Colors.orange,
-        );
-        return;
-      }
-
-      if (selectedProject == null) {
-        _showSnackBar(
-          context,
-          "⚠️ Please select a Project before storing data!",
-          Colors.orange,
-        );
-        return;
-      }
-
-      if (!(_formKey.currentState?.validate() ?? false)) {
-        _showSnackBar(
-          context,
-          "Please fix the errors in the form",
-          Colors.red,
-        );
-        return;
-      }
-
-      final List<Map<String, dynamic>> rawData =
-      await _databaseHelper.readData('SerialNumberStoreTable');
-
-      String deviceID = await getDeviceId();
-      print("Device ID: $deviceID");
-
-      if (rawData.isEmpty) {
-        _showSnackBar(context, "No data to store!", Colors.red);
-        return;
-      }
-
-      print("📦 Raw data from database (${rawData.length} items): $rawData");
-
-      _showSnackBar(
-        context,
-        "Storing ${rawData.length} records...",
-        null,
-        duration: 2,
-      );
-
-      final List<ScannedItemModal> allData =
-      rawData.map((row) => ScannedItemModal.fromJson(row)).toList();
-
-      print("✅ Converted to models: ${allData.length} items");
-
-      // Get description controllers from the ScannedItemsList widget
-      final scannedItemsListState = _formKey.currentState?.context
-          .findAncestorStateOfType<_ScannedItemsListState>();
-
-      List<Map<String, dynamic>> dataToSend = [];
-      for (int i = 0; i < allData.length; i++) {
-        String description = "";
-        if (scannedItemsListState != null &&
-            i < scannedItemsListState._descriptionControllers.length) {
-          description =
-              scannedItemsListState._descriptionControllers[i].text.trim();
-        }
-
-        dataToSend.add({
-          "id": allData[i].id ?? "",
-          "vendorName": selectedVendor.vendorName ?? "",
-          "projectName": selectedProject.projectName ?? "",
-          "deviceID": deviceID,
-          "serialNumber": allData[i].serialNumber,
-          "productDescription": description,
-          "scanned_type": allData[i].format,
-          "timestamp": allData[i].scannedAt,
-        });
-      }
-
-      print("📤 Data to send to Google Sheets:");
-
-      var response =
-      await GoogleSheetsService().callApi('store', {'data': dataToSend});
-
-      print("📥 Google Sheets Response: $response");
-
-      if (!context.mounted) return;
-
-      _showSnackBar(
-        context,
-        "✓ ${response['message'] ?? 'Data stored successfully'}",
-        Colors.green,
-      );
-
-      await _databaseHelper.clearTable('SerialNumberStoreTable');
-      _loadScannedData();
-
-      // Clear selections after success
-      ref.read(selectedVendorProvider.notifier).state = null;
-      ref.read(selectedProjectProvider.notifier).state = null;
-    } catch (e, stackTrace) {
-      print("❌ Error storing data: $e");
-      print("Stack trace: $stackTrace");
-
-      if (!context.mounted) return;
-      _showSnackBar(context, "✗ Error: ${e.toString()}", Colors.red,
-          duration: 5);
-    }
-  }
-*/
 
   void _showSnackBar(BuildContext context, String message, Color? color,
       {int duration = 3}) {
