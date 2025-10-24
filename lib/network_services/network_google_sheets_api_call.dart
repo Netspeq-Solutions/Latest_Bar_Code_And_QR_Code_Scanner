@@ -3,11 +3,15 @@ import 'package:http/http.dart' as http;
 import 'package:latestversionscanner/modal/vendor_and_project_model.dart';
 
 class GoogleSheetsService {
-  final String webAppUrl = "https://script.google.com/macros/s/AKfycby7lD-Ik6ovsPzsZo-buIQvQdUuYx5UkGa9vKl0VjS5g1V0VVwWEOmCUNeWf-EdgJWO/exec";
-  final String webAppUrlToGetVendorAndProjectList = "https://script.google.com/macros/s/AKfycbyzqxvV4wHilK_ezDur6X0S6nUXEKCC2ymm1acXnHycOm8PJFHEkOAxE0p5TjM1popt/exec";
+  final String webAppUrl =
+      "https://script.google.com/macros/s/AKfycby7lD-Ik6ovsPzsZo-buIQvQdUuYx5UkGa9vKl0VjS5g1V0VVwWEOmCUNeWf-EdgJWO/exec";
+  final String webAppUrlToGetVendorAndProjectList =
+      "https://script.google.com/macros/s/AKfycbyzqxvV4wHilK_ezDur6X0S6nUXEKCC2ymm1acXnHycOm8PJFHEkOAxE0p5TjM1popt/exec";
 
   Future<Map<String, dynamic>> callApi(
-      String action, Map<String, dynamic> data) async {
+    String action,
+    Map<String, dynamic> data,
+  ) async {
     data['action'] = action;
 
     var response = await http.post(
@@ -46,7 +50,7 @@ class GoogleSheetsService {
       return {
         "status": "success",
         "message": "Data stored successfully",
-        "statusCode": response.statusCode
+        "statusCode": response.statusCode,
       };
     } else {
       throw Exception("Failed: ${response.statusCode}\nBody: ${response.body}");
@@ -57,15 +61,24 @@ class GoogleSheetsService {
     final match = RegExp(r'HREF="([^"]+)"').firstMatch(html);
     return match?.group(1)?.replaceAll('&amp;', '&');
   }
+
   Future<List<VendorAndProjectModel>> fetchVendorAndProjectList() async {
     try {
-      var response = await http.get(Uri.parse(webAppUrlToGetVendorAndProjectList));
+      var response = await http.get(
+        Uri.parse(webAppUrlToGetVendorAndProjectList),
+      );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body); // directly parse JSON
-        return data.map((item) => VendorAndProjectModel.fromJson(item)).toList();
+        final List<dynamic> data = jsonDecode(
+          response.body,
+        ); // directly parse JSON
+        return data
+            .map((item) => VendorAndProjectModel.fromJson(item))
+            .toList();
       } else {
-        throw Exception('Failed to load vendor and project list. Status code: ${response.statusCode}');
+        throw Exception(
+          'Failed to load vendor and project list. Status code: ${response.statusCode}',
+        );
       }
     } catch (e) {
       print("Error fetching vendor and project list: $e");
