@@ -6,12 +6,9 @@ class GoogleSheetsService {
   final String webAppUrl =
       "https://script.google.com/macros/s/AKfycby7lD-Ik6ovsPzsZo-buIQvQdUuYx5UkGa9vKl0VjS5g1V0VVwWEOmCUNeWf-EdgJWO/exec";
   final String webAppUrlToGetVendorAndProjectList =
-      "https://script.google.com/macros/s/AKfycbyzqxvV4wHilK_ezDur6X0S6nUXEKCC2ymm1acXnHycOm8PJFHEkOAxE0p5TjM1popt/exec";
+      "https://script.google.com/macros/s/AKfycbyYovYWTRB6MkZD3--oMPt0k6luRnxUrCg-WqP7kg5jRMHI1Pi37vOW6UvJ-3xgDa_R/exec";
 
-  Future<Map<String, dynamic>> callApi(
-    String action,
-    Map<String, dynamic> data,
-  ) async {
+  Future<Map<String, dynamic>> callApi(String action, Map<String, dynamic> data) async {
     data['action'] = action;
 
     var response = await http.post(
@@ -62,23 +59,55 @@ class GoogleSheetsService {
     return match?.group(1)?.replaceAll('&amp;', '&');
   }
 
-  Future<List<VendorAndProjectModel>> fetchVendorAndProjectList() async {
+  Future<List<VendorModel>> fetchAllVendor() async {
     try {
-      var response = await http.get(
-        Uri.parse(webAppUrlToGetVendorAndProjectList),
+      const String action = "GetAllVendor";
+      final uri = Uri.parse(webAppUrlToGetVendorAndProjectList).replace(
+        queryParameters: {
+          'action': action,
+        },
       );
 
+      final response = await http.get(uri);
+
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(
-          response.body,
-        ); // directly parse JSON
+        final List<dynamic> data = jsonDecode(response.body);
         return data
-            .map((item) => VendorAndProjectModel.fromJson(item))
+            .map((item) => VendorModel.fromJson(item))
             .toList();
       } else {
         throw Exception(
           'Failed to load vendor and project list. Status code: ${response.statusCode}',
         );
+      }
+    } catch (e) {
+      print("Error fetching vendor and project list: $e");
+      return [];
+    }
+  }
+
+  Future<List<ProjectModel>> fetchAllSpecificProjectName(int vendorId) async {
+    try {
+      const String action = "GetAllProjectByID";
+      final uri = Uri.parse(webAppUrlToGetVendorAndProjectList).replace(
+        queryParameters: {
+          'action': action,
+          'vendor_id': vendorId.toString(),
+        },
+      );
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = jsonDecode(response.body);
+
+        // Map JSON to ProjectModel
+        return jsonData
+            .map((jsonItem) => ProjectModel.fromJson(jsonItem))
+            .toList();
+      } else {
+        throw Exception(
+            'Failed to load vendor and project list. Status code: ${response.statusCode}');
       }
     } catch (e) {
       print("Error fetching vendor and project list: $e");

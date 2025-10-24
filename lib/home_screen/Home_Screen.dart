@@ -24,6 +24,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final DatabaseHelper _databaseHelper = DatabaseHelper();
   final _formKey = GlobalKey<FormState>();
   final ValueNotifier<List<String>> _descriptionsNotifier = ValueNotifier([]);
+  int vendorId = 0;
 
   @override
   void initState() {
@@ -59,11 +60,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final vendorsAsync = ref.watch(dataVendorAndProjectProvider);
-    final projectsAsync = ref.watch(dataVendorAndProjectProvider);
-
+    final vendorsAsync = ref.watch(vendorProvider);
     final selectedVendor = ref.watch(selectedVendorProvider);
+    final vendorId = selectedVendor?.slno ?? 0;
+
+    final projectsAsync = vendorId != 0
+        ? ref.watch(projectProvider(vendorId))
+        : const AsyncValue.data(<ProjectModel>[]); // Use empty List<ProjectModel>
+ // Empty list when vendor not selected
+
     final selectedProject = ref.watch(selectedProjectProvider);
+
 
     return Scaffold(
       appBar: AppBar(title: const Text("Scanned List")),
@@ -190,7 +197,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 data: (list) {
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: GenericDropdownWidget<VendorAndProjectModel>(
+                    child: GenericDropdownWidget<VendorModel>(
                       title: 'Vendor',
                       items: list,
                       selectedItem: selectedVendor,
@@ -205,7 +212,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 },
                 loading: () => Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: GenericDropdownWidget<VendorAndProjectModel>(
+                  child: GenericDropdownWidget<VendorModel>(
                     title: 'Vendor',
                     items: const [],
                     selectedItem: null,
@@ -213,12 +220,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     hint: 'Choose a vendor',
                     prefixIcon: Icons.business,
                     isLoading: true, // ✅ This shows the loading indicator
-                    onChanged: (value) {},
+                    onChanged: (value)
+                    {
+                      setState(() {
+
+                      });
+                        ref.read(selectedVendorProvider.notifier).state = value;
+                        ref.read(selectedProjectProvider.notifier).state = null;
+                    },
                   ),
                 ),
                 error: (err, stack) => Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: GenericDropdownWidget<VendorAndProjectModel>(
+                  child: GenericDropdownWidget<VendorModel>(
                     title: 'Vendor',
                     items: const [],
                     selectedItem: null,
@@ -227,7 +241,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     prefixIcon: Icons.business,
                     errorMessage:
                         'Failed to load vendors', // ✅ This shows the error
-                    onChanged: (value) {},
+                    onChanged: (value) {
+
+                    },
                   ),
                 ),
               ),
@@ -237,7 +253,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 data: (list) {
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: GenericDropdownWidget<VendorAndProjectModel>(
+                    child: GenericDropdownWidget<ProjectModel>(
                       title: 'Project',
                       items: list,
                       selectedItem: selectedProject,
@@ -253,7 +269,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 },
                 loading: () => Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: GenericDropdownWidget<VendorAndProjectModel>(
+                  child: GenericDropdownWidget<ProjectModel>(
                     title: 'Project',
                     items: const [],
                     selectedItem: null,
@@ -266,7 +282,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 error: (err, stack) => Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: GenericDropdownWidget<VendorAndProjectModel>(
+                  child: GenericDropdownWidget<ProjectModel>(
                     title: 'Project',
                     items: const [],
                     selectedItem: null,
@@ -450,6 +466,9 @@ class ScannedItemsList extends StatefulWidget {
   @override
   State<ScannedItemsList> createState() => _ScannedItemsListState();
 }
+
+
+
 
 class _ScannedItemsListState extends State<ScannedItemsList> {
   final List<TextEditingController> _serialControllers = [];
